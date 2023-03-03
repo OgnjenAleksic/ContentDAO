@@ -22,6 +22,7 @@ const { localNetworks } = require("../../helper.hardhat.config");
       });
 
       describe("Constructor", () => {
+        //CONTRACT CONSTRUCTOR
         it("Sets the AggregatorV3Interface address correctly", async () => {
           const priceFeedAddress = await contentDAO.getPriceFeedAddress();
           const mockAddress = MockV3Aggregator.address;
@@ -45,6 +46,15 @@ const { localNetworks } = require("../../helper.hardhat.config");
         it("Mints 2 CT tokens for the creator", async () => {
           const creatorBalance = await contentDAO.getBalance(creator);
           assert.equal(creatorBalance.toString(), ethers.utils.parseEther("2"));
+        });
+        //ERC20 CONSTRUCTOR
+        it("Sets token name correctly", async () => {
+          const tokenName = await contentDAO.name();
+          assert.equal(tokenName, "ContentToken");
+        });
+        it("Sets token symbol correctly", async () => {
+          const tokenSymbol = await contentDAO.symbol();
+          assert.equal(tokenSymbol, "CT");
         });
       });
     });
