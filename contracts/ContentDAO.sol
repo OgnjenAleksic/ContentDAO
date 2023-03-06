@@ -36,7 +36,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
 
     AggregatorV3Interface internal priceFeed;
     address private immutable i_creator;
-    uint256 private constant MINTING_OPEN_DURATION = 1 weeks;
+    uint32 private constant MINTING_OPEN_DURATION = 1 seconds;
     uint256 private s_lastTimestamp;
     uint256 private constant PRICE_IN_USD = 15 * 10 ** 18;
     MintStatus s_mintStatus;
@@ -141,6 +141,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
      * Restarts holders array
      * Returns Mint status back to open
      * Sends ETH to the the content creator
+     * Added: sets lastTimestamp to the timestamp of the block that inclueded this tx
      */
     function endMonthTokenBurn() public onlyCreator {
         address[] memory holders = s_holders;
@@ -151,6 +152,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
 
         s_holders = new address[](0);
         s_mintStatus = MintStatus.OPEN;
+        s_lastTimestamp = block.timestamp;
 
         (bool success, ) = payable(i_creator).call{
             value: address(this).balance
@@ -185,7 +187,15 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
     }
 
     function getLatestTimestamp() external view returns (uint256) {
+        return block.timestamp;
+    }
+
+    function getLastTimestamp() external view returns (uint256) {
         return s_lastTimestamp;
+    }
+
+    function getMintDuration() external pure returns (uint) {
+        return MINTING_OPEN_DURATION;
     }
 
     function getPriceFeedAddress()
