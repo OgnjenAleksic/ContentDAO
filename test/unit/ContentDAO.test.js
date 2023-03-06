@@ -83,18 +83,32 @@ const { localNetworks } = require("../../helper.hardhat.config");
       });
       describe("CheckUpkeep", () => {
         let contractWithSigner;
+        let mintingDuration;
         beforeEach(async () => {
           const signer = (await ethers.getSigners())[3];
           contractWithSigner = contentDAO.connect(signer);
+          mintingDuration = await contentDAO.getMintDuration();
         });
 
-        it("Checks if enought time has passed, has holders and is open", async () => {
-          const mintingDuration = await contentDAO.getMintDuration();
+        it("Returns false if not enough time has passed", async () => {
           await contractWithSigner.ctTokenMint({
             value: ethers.utils.parseEther("0.0075"),
           });
           let [upkeepNeeded] = await contentDAO.checkUpkeep("0x");
           assert.equal(upkeepNeeded, false);
+        });
+        it("Returns false if there is no CT token holders", async () => {
+          await network.provider.send("evm_increaseTime", [
+            mintingDuration.toNumber() + 5,
+          ]);
+          await network.provider.send("evm_mine", []);
+          [upkeepNeeded] = await contentDAO.checkUpkeep("0x");
+          assert.equal(upkeepNeeded, false);
+        });
+        it("Returns true if enough time has passed, there are CT holders and Mint status is open", async () => {
+          await contractWithSigner.ctTokenMint({
+            value: ethers.utils.parseEther("0.0075"),
+          });
           await network.provider.send("evm_increaseTime", [
             mintingDuration.toNumber() + 5,
           ]);
