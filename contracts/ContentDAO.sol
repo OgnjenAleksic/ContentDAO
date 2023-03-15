@@ -29,6 +29,10 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
         OPEN,
         CLOSED
     }
+    enum ProposalStatus {
+        OPEN,
+        CLOSED
+    }
 
     event TheMintHasClosed();
     event TokensHaveBeenBurned();
@@ -40,6 +44,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
     uint256 private s_lastTimestamp;
     uint256 private constant PRICE_IN_USD = 15 * 10 ** 18;
     MintStatus s_mintStatus;
+    ProposalStatus s_proposalStatus;
     address[] private s_holders;
 
     //Constructor function
@@ -52,6 +57,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
         //Minting
         s_lastTimestamp = block.timestamp;
         s_mintStatus = MintStatus.OPEN;
+        s_proposalStatus = ProposalStatus.OPEN;
         i_creator = creator;
         _mint(i_creator, 2 * (10 ** decimals()));
     }
@@ -103,11 +109,16 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
         (bool upkeepNeeded, ) = checkUpkeep("");
         if (!upkeepNeeded) revert Upkeep_Is_Not_Needed();
         _updateMintStatus();
+        _updateProposalStatus();
     }
 
     function _updateMintStatus() internal {
         s_mintStatus = MintStatus.CLOSED;
         emit TheMintHasClosed();
+    }
+
+    function _updateProposalStatus() internal {
+        s_proposalStatus = ProposalStatus.CLOSED;
     }
 
     /**
@@ -152,6 +163,7 @@ contract ContentDAO is ERC20, AutomationCompatibleInterface {
 
         s_holders = new address[](0);
         s_mintStatus = MintStatus.OPEN;
+        s_proposalStatus = ProposalStatus.OPEN;
         s_lastTimestamp = block.timestamp;
 
         (bool success, ) = payable(i_creator).call{
